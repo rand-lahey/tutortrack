@@ -276,6 +276,29 @@ const API_URL = '/.netlify/functions/api';
   <!-- ADMIN -->
   <div id="page-admin" class="page"><div id="admin-content"></div></div>
 
+  <!-- CHARTS -->
+  <div id="page-charts" class="page">
+    <div class="card">
+      <div class="card-title">Attendance rate by month</div>
+      <div class="att-legend" style="margin-bottom:8px">
+        <span><span class="att-dot" style="background:var(--green)"></span>Present %</span>
+        <span><span class="att-dot" style="background:var(--amber)"></span>Tutor absent %</span>
+        <span><span class="att-dot" style="background:var(--red)"></span>Absent %</span>
+      </div>
+      <div style="position:relative;height:220px"><canvas id="monthlyChart"></canvas></div>
+    </div>
+    <div id="tutor-chart-card" class="card hidden">
+      <div class="card-title">Tutor comparison</div>
+      <div class="att-legend" style="margin-bottom:8px">
+        <span><span class="att-dot" style="background:var(--blue)"></span>Attendance %</span>
+        <span><span class="att-dot" style="background:var(--amber)"></span>Tutor absence %</span>
+      </div>
+      <div style="position:relative;height:220px"><canvas id="tutorChart"></canvas></div>
+      <div id="tutor-chart-table" style="margin-top:14px"></div>
+    </div>
+    <div id="charts-empty" class="hidden" style="text-align:center;color:var(--text2);font-size:14px;padding:32px 0">No session data yet.</div>
+  </div>
+
   <nav class="bottomnav" id="bottomnav"></nav>
 </div>
 
@@ -605,8 +628,8 @@ function setupUI() {
   av.style.color=isAdmin?'#534ab7':'#185fa5';
 
   const nav=isAdmin
-    ? [{id:'dash',i:'◉',l:'Dashboard'},{id:'students',i:'◎',l:'Students'},{id:'log',i:'⊞',l:'Tracker'},{id:'alerts',i:'▲',l:'Alerts'},{id:'admin',i:'❖',l:'Tutors'}]
-    : [{id:'dash',i:'◉',l:'Dashboard'},{id:'students',i:'◎',l:'Students'},{id:'attendance',i:'✓',l:'Attendance'},{id:'log',i:'⊞',l:'Tracker'},{id:'alerts',i:'▲',l:'Alerts'}];
+    ? [{id:'dash',i:'◉',l:'Dashboard'},{id:'students',i:'◎',l:'Students'},{id:'log',i:'⊞',l:'Tracker'},{id:'charts',i:'▦',l:'Charts'},{id:'admin',i:'❖',l:'Tutors'}]
+    : [{id:'dash',i:'◉',l:'Dashboard'},{id:'students',i:'◎',l:'Students'},{id:'attendance',i:'✓',l:'Attendance'},{id:'log',i:'⊞',l:'Tracker'},{id:'charts',i:'▦',l:'Charts'}];
   document.getElementById('bottomnav').innerHTML=nav.map(n=>`<button class="bnav-item" id="bnav-${n.id}" onclick="showPage('${n.id}')"><span class="bnav-icon">${n.i}</span>${n.l}</button>`).join('');
 }
 
@@ -621,6 +644,7 @@ function showPage(name) {
   if (name==='log') renderTracker();
   if (name==='alerts') renderAlerts();
   if (name==='admin') renderAdmin();
+  if (name==='charts') renderCharts();
 }
 
 // ── HELPERS ──────────────────────────────────────────────────────────────────
@@ -1059,6 +1083,138 @@ async function bulkSetColumn(code) {
   } catch(err) {
     status.textContent='Some saves failed — refresh to confirm.';
   }
+}
+
+// ── CHARTS ───────────────────────────────────────────────────────────────────
+let monthlyChartInst = null, tutorChartInst = null;
+
+function renderCharts() {
+  if (!sessions.length) {
+    document.getElementById('charts-empty').classList.remove('hidden');
+    return;
+  }
+  document.getElementById('charts-empty').classList.add('hidden');
+  renderMonthlyChart();
+  if (currentUser.role === 'admin') {
+    document.getElementById('tutor-chart-card').classList.remove('hidden');
+    renderTutorChart();
+  }
+}
+
+function renderMonthlyChart() {
+  // Build month buckets from all sessions
+  const buckets = {}; // { 'YYYY-MM': {P,A,TA,UA} }
+  sessions.forEach(s => {
+    const month = String(s.date).slice(0, 7);
+    if (!buckets[month]) buckets[month] = {P:0,A:0,TA:0,UA:0};
+    if (s.code && buckets[month][s.code] !== undefined) buckets[month][s.code]++;
+  });
+
+  const labels = Object.keys(buckets).sort();
+  if (!labels.length) return;
+
+  const presentPct = labels.map(m => {
+    const b = buckets[m]; const total = b.P+b.A+b.TA+b.UA;
+    return total ? Math.round(b.P/total*100) : 0;
+  });
+  const taPct = labels.map(m => {
+    const b = buckets[m]; const total = b.P+b.A+b.TA+b.UA;
+    return total ? Math.round(b.TA/total*100) : 0;
+  });
+  const absPct = labels.map(m => {
+    const b = buckets[m]; const total = b.P+b.A+b.TA+b.UA;
+    return total ? Math.round((b.A+b.UA)/total*100) : 0;
+  });
+
+  // Format labels as "Jan 2025"
+  const fmtLabels = labels.map(m => {
+    const [y, mo] = m.split('-');
+    return `${MONTH_NAMES[parseInt(mo)-1].slice(0,3)} ${y}`;
+  });
+
+  if (monthlyChartInst) monthlyChartInst.destroy();
+  monthlyChartInst = new Chart(document.getElementById('monthlyChart').getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: fmtLabels,
+      datasets: [
+        { label: 'Present %', data: presentPct, borderColor: '#639922', backgroundColor: 'rgba(99,153,34,.1)', tension: 0.3, fill: true, pointRadius: 4 },
+        { label: 'Tutor absent %', data: taPct, borderColor: '#ef9f27', backgroundColor: 'rgba(239,159,39,.08)', tension: 0.3, fill: false, pointRadius: 4 },
+        { label: 'Absent %', data: absPct, borderColor: '#e24b4a', backgroundColor: 'rgba(226,75,74,.08)', tension: 0.3, fill: false, pointRadius: 4 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { min: 0, max: 100, ticks: { callback: v => v+'%', font: { size: 11 } }, grid: { color: 'rgba(0,0,0,.06)' } },
+        x: { ticks: { font: { size: 11 } }, grid: { display: false } }
+      }
+    }
+  });
+}
+
+function renderTutorChart() {
+  const tutors = users.filter(u => u.role === 'tutor');
+  if (!tutors.length) return;
+
+  const names = [], attRates = [], taRates = [], studentCounts = [], sessionCounts = [];
+
+  tutors.forEach(t => {
+    const tEnrs = enrollments.filter(e => String(e.tutorId) === String(t.id));
+    const total = tEnrs.reduce((a,e) => a + enrollmentSessions(e.id).length, 0);
+    const allP = tEnrs.reduce((a,e) => a + attStats(e.id).P, 0);
+    const allTA = tEnrs.reduce((a,e) => a + attStats(e.id).TA, 0);
+    names.push(t.name);
+    attRates.push(total ? Math.round(allP/total*100) : 0);
+    taRates.push(total ? Math.round(allTA/total*100) : 0);
+    studentCounts.push(new Set(tEnrs.map(e=>String(e.studentId))).size);
+    sessionCounts.push(total);
+  });
+
+  if (tutorChartInst) tutorChartInst.destroy();
+  tutorChartInst = new Chart(document.getElementById('tutorChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: names,
+      datasets: [
+        { label: 'Attendance %', data: attRates, backgroundColor: '#3266ad', borderRadius: 4 },
+        { label: 'Tutor absence %', data: taRates, backgroundColor: '#ef9f27', borderRadius: 4 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { min: 0, max: 100, ticks: { callback: v => v+'%', font: { size: 11 } }, grid: { color: 'rgba(0,0,0,.06)' } },
+        x: { ticks: { font: { size: 11 } }, grid: { display: false } }
+      }
+    }
+  });
+
+  // Summary table below chart
+  document.getElementById('tutor-chart-table').innerHTML = `
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead>
+        <tr style="border-bottom:0.5px solid var(--border)">
+          <th style="text-align:left;padding:6px 4px;font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase">Tutor</th>
+          <th style="text-align:center;padding:6px 4px;font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase">Students</th>
+          <th style="text-align:center;padding:6px 4px;font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase">Sessions</th>
+          <th style="text-align:center;padding:6px 4px;font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase">Att %</th>
+          <th style="text-align:center;padding:6px 4px;font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase">TA %</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${tutors.map((t,i) => `
+          <tr style="border-bottom:0.5px solid var(--border)">
+            <td style="padding:8px 4px;font-weight:500">${t.name}</td>
+            <td style="padding:8px 4px;text-align:center">${studentCounts[i]}</td>
+            <td style="padding:8px 4px;text-align:center">${sessionCounts[i]}</td>
+            <td style="padding:8px 4px;text-align:center;font-weight:600;color:${rateColor(attRates[i])}">${attRates[i]}%</td>
+            <td style="padding:8px 4px;text-align:center;color:var(--amber-text)">${taRates[i]}%</td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
 }
 
 // ── ALERTS ────────────────────────────────────────────────────────────────────
