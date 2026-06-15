@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>TutorTrack</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#fff;--bg2:#f5f5f4;--bg3:#eeede8;
+  --text:#1a1a1a;--text2:#6b6b6b;--text3:#9b9b9b;
+  --border:rgba(0,0,0,.12);--border2:rgba(0,0,0,.2);
+  --blue:#3266ad;--blue-bg:#e6f1fb;--blue-text:#185fa5;
+  --green:#639922;--green-bg:#eaf3de;--green-text:#3b6d11;
+  --amber:#ef9f27;--amber-bg:#faeeda;--amber-text:#854f0b;
+  --red:#e24b4a;--red-bg:#fcebeb;--red-text:#a32d2d;
+  --pink-bg:#fbeaf0;--pink-text:#993556;
+  --purple-bg:#eeedfe;--purple-text:#534ab7;
+  --radius:10px;--radius-sm:6px;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#1c1c1e;--bg2:#2c2c2e;--bg3:#3a3a3c;
+    --text:#f5f5f5;--text2:#ababab;--text3:#6b6b6b;
+    --border:rgba(255,255,255,.12);--border2:rgba(255,255,255,.22);
+  }
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px;background:var(--bg);color:var(--text);min-height:100vh}
+.hidden{display:none!important}
+
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--bg2)}
+.login-card{background:var(--bg);border-radius:var(--radius);padding:28px 24px;width:100%;max-width:380px;border:0.5px solid var(--border)}
+.login-card h1{font-size:22px;font-weight:600;margin-bottom:4px}
+.login-card p{font-size:14px;color:var(--text2);margin-bottom:16px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:13px;font-weight:500;color:var(--text2);margin-bottom:6px}
+.field input,.field select,.field textarea{width:100%;padding:11px 13px;border:0.5px solid var(--border2);border-radius:var(--radius-sm);font-size:15px;background:var(--bg);color:var(--text);outline:none;font-family:inherit}
+.field textarea{resize:vertical;min-height:70px}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--blue)}
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:12px;border-radius:var(--radius-sm);font-size:15px;font-weight:500;cursor:pointer;border:0.5px solid var(--border2);background:var(--bg);color:var(--text);transition:background .15s;font-family:inherit}
+.btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn-primary:hover{background:#285a9e}
+.btn:hover{background:var(--bg2)}
+.btn-sm{padding:7px 13px;font-size:13px;width:auto}
+.error-msg{font-size:13px;color:var(--red-text);background:var(--red-bg);padding:8px 12px;border-radius:var(--radius-sm);margin-bottom:14px}
+
+/* Confidentiality notice on login */
+.confidential-notice{font-size:12px;color:var(--text3);background:var(--bg2);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:18px;line-height:1.5;border-left:3px solid var(--amber)}
+
+.app{display:flex;flex-direction:column;min-height:100vh}
+.topnav{background:var(--bg);border-bottom:0.5px solid var(--border);padding:0 16px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.topnav-title{font-size:16px;font-weight:600}
+.topnav-right{display:flex;align-items:center;gap:10px}
+.avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0}
+
+/* Session timeout bar */
+.session-bar{height:3px;background:var(--bg2);position:fixed;top:52px;left:0;right:0;z-index:49}
+.session-bar-fill{height:100%;background:var(--green);transition:width 10s linear,background .5s}
+
+.page{display:none;flex:1;padding:16px;padding-bottom:80px}
+.page.active{display:block}
+
+.bottomnav{position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:0.5px solid var(--border);display:flex;z-index:50;padding-bottom:env(safe-area-inset-bottom)}
+.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px;cursor:pointer;font-size:10px;color:var(--text3);border:none;background:none;gap:3px;transition:color .15s;font-family:inherit}
+.bnav-item.active{color:var(--blue)}
+.bnav-icon{font-size:20px;line-height:1}
+
+.card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:12px}
+.card-title{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px}
+.section-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin:16px 0 8px}
+
+.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.metric{background:var(--bg2);border-radius:var(--radius-sm);padding:12px 14px}
+.metric-label{font-size:11px;color:var(--text2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em}
+.metric-value{font-size:24px;font-weight:600}
+
+.list-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:0.5px solid var(--border)}
+.list-row:last-child{border-bottom:none}
+.list-row-info{flex:1;min-width:0}
+.list-row-name{font-size:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.list-row-sub{font-size:13px;color:var(--text2);margin-top:2px}
+.list-row-right{text-align:right;flex-shrink:0}
+
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:500}
+.badge-P{background:var(--green-bg);color:var(--green-text)}
+.badge-A{background:var(--red-bg);color:var(--red-text)}
+.badge-TA{background:var(--amber-bg);color:var(--amber-text)}
+.badge-UA{background:var(--pink-bg);color:var(--pink-text)}
+.badge-admin{background:var(--purple-bg);color:var(--purple-text)}
+.badge-tutor{background:var(--blue-bg);color:var(--blue-text)}
+.tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px;background:var(--bg2);color:var(--text2)}
+.tag-subject{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;background:var(--blue-bg);color:var(--blue-text);font-weight:500;margin-right:4px}
+
+.att-dots{display:flex;gap:4px;flex-wrap:wrap}
+.att-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0;display:inline-block}
+.dot-P{background:var(--green)}.dot-A{background:var(--red)}.dot-TA{background:var(--amber)}.dot-UA{background:#d4537e}
+.att-legend{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;font-size:12px;color:var(--text2)}
+.att-legend span{display:flex;align-items:center;gap:4px}
+
+.alert{padding:12px 14px;border-radius:var(--radius-sm);border-left:3px solid var(--amber);background:var(--amber-bg);margin-bottom:10px}
+.alert.red{border-left-color:var(--red);background:var(--red-bg)}
+.alert-name{font-weight:500;font-size:14px;margin-bottom:2px}
+.alert-sub{font-size:13px;color:var(--text2)}
+
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.info-item{background:var(--bg2);border-radius:var(--radius-sm);padding:10px 12px}
+.info-lbl{font-size:11px;color:var(--text2);margin-bottom:3px;text-transform:uppercase;letter-spacing:.04em}
+.info-val{font-size:14px;font-weight:600}
+.trend-up{color:var(--green-text)}.trend-dn{color:var(--red-text)}
+
+.tutor-block{background:var(--bg2);border-radius:var(--radius);padding:14px;margin-bottom:12px}
+.tutor-block-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:flex-end;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--bg);border-radius:var(--radius) var(--radius) 0 0;padding:24px;width:100%;max-width:520px;max-height:85vh;overflow-y:auto;padding-bottom:calc(24px + env(safe-area-inset-bottom))}
+.modal h3{font-size:17px;font-weight:600;margin-bottom:16px}
+.modal-actions{display:flex;gap:10px;margin-top:20px}
+.modal-actions .btn{flex:1}
+
+canvas{max-width:100%}
+
+.tracker-wrap{overflow-x:auto;border:0.5px solid var(--border);border-radius:var(--radius);background:var(--bg);-webkit-overflow-scrolling:touch}
+.tracker-table{border-collapse:separate;border-spacing:0;width:100%;font-size:13px}
+.tracker-table th,.tracker-table td{padding:6px;border-bottom:0.5px solid var(--border);text-align:center;min-width:62px}
+.tracker-table th:first-child,.tracker-table td:first-child{position:sticky;left:0;background:var(--bg);z-index:2;text-align:left;min-width:140px;max-width:160px;border-right:0.5px solid var(--border);padding-left:10px}
+.tracker-table thead th{background:var(--bg2);font-weight:600;font-size:11px;color:var(--text2)}
+.tracker-table thead th:first-child{background:var(--bg2)}
+.tracker-table thead th .day{font-size:15px;font-weight:600;color:var(--text);display:block}
+.col-action{display:block;margin:4px auto 0;width:22px;height:18px;line-height:14px;border:0.5px solid var(--border2);border-radius:4px;background:var(--bg);color:var(--text2);font-size:14px;cursor:pointer;padding:0;font-family:inherit}
+.col-action:hover{background:var(--bg2);color:var(--text)}
+.tracker-cell-select{width:100%;padding:6px 4px;border:0.5px solid transparent;background:transparent;color:var(--text);font-size:13px;font-weight:500;border-radius:var(--radius-sm);text-align:center;cursor:pointer;appearance:none;-webkit-appearance:none;text-align-last:center}
+.tracker-cell-select:hover,.tracker-cell-select:focus{border-color:var(--border2)}
+.tc-P{background:var(--green-bg);color:var(--green-text)}
+.tc-A{background:var(--red-bg);color:var(--red-text)}
+.tc-TA{background:var(--amber-bg);color:var(--amber-text)}
+.tc-UA{background:var(--pink-bg);color:var(--pink-text)}
+
+.tutor-tabs{display:flex;gap:4px;background:var(--bg2);border-radius:var(--radius-sm);padding:3px;margin-bottom:12px;overflow-x:auto}
+.tutor-tab{padding:8px 14px;font-size:13px;font-weight:500;color:var(--text2);background:none;border:none;border-radius:var(--radius-sm);cursor:pointer;white-space:nowrap;font-family:inherit}
+.tutor-tab.active{background:var(--bg);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.05)}
+
+.enrollment-row{padding:10px 12px;background:var(--bg2);border-radius:var(--radius-sm);margin-bottom:8px;display:flex;align-items:center;gap:10px}
+.enrollment-row .er-info{flex:1;min-width:0}
+.enrollment-row .er-subject{font-weight:600;font-size:14px}
+.enrollment-row .er-tutor{font-size:12px;color:var(--text2);margin-top:2px}
+
+.subjects-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+
+/* ── PRINT STYLES ── */
+@media print {
+  body::before{
+    content:'CONFIDENTIAL';
+    position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-35deg);
+    font-size:80px;font-weight:900;color:rgba(220,50,50,.08);
+    pointer-events:none;z-index:9999;letter-spacing:.15em;white-space:nowrap
+  }
+  .print-header{display:block!important}
+  .topnav,.bottomnav,.session-bar,.btn,.btn-sm,.modal-bg{display:none!important}
+  .page{display:block!important;padding:0}
+  body{font-size:12px}
+}
+.print-header{display:none;font-size:11px;color:#666;border-bottom:1px solid #ccc;padding-bottom:6px;margin-bottom:12px}
+</style>
+</head>
+<body>
+
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbymprEWwUF76SbWmYUgbUAce3Nlk08mnSztqlK1trcIOu-0Pi6ogP_Akgihvyvn74s33g/exec';
+</script>
+
+<!-- LOGIN -->
+<div id="login-wrap" class="login-wrap">
+  <div class="login-card">
+    <h1>TutorTrack</h1>
+    <p>Sign in to continue</p>
+    <div class="confidential-notice">
+      ⚠ This system contains confidential student information. Access is restricted to authorized staff only. Do not share your login credentials or leave this application open and unattended.
+    </div>
+    <div class="field"><label>Username</label><input type="text" id="login-user" autocomplete="username"></div>
+    <div class="field"><label>Password</label><input type="password" id="login-pw" autocomplete="current-password"></div>
+    <div class="error-msg hidden" id="login-err"></div>
+    <button class="btn btn-primary" id="login-btn" onclick="doLogin()">Sign in</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="app hidden">
+  <nav class="topnav">
+    <span class="topnav-title" id="topnav-title">TutorTrack</span>
+    <div class="topnav-right">
+      <span id="session-timer-label" style="font-size:12px;color:var(--text3)"></span>
+      <button class="btn btn-sm" id="refresh-btn" onclick="refreshAll()" style="width:auto;padding:7px 10px">↻</button>
+      <div class="avatar" id="topnav-av"></div>
+      <button class="btn btn-sm" onclick="logout()" style="width:auto">Sign out</button>
+    </div>
+  </nav>
+  <div class="session-bar"><div class="session-bar-fill" id="session-bar-fill" style="width:100%"></div></div>
+
+  <!-- Print header (hidden on screen, visible when printing) -->
+  <div class="print-header" id="print-header"></div>
+
+  <!-- DASHBOARD -->
+  <div id="page-dash" class="page active">
+    <div class="metric-grid" id="dash-metrics"></div>
+    <div class="card">
+      <div class="card-title">Attendance breakdown</div>
+      <div style="position:relative;height:180px"><canvas id="attChart" role="img" aria-label="Attendance breakdown chart">Attendance breakdown.</canvas></div>
+      <div class="att-legend" style="margin-top:10px;margin-bottom:0">
+        <span><span class="att-dot dot-P"></span>Present</span>
+        <span><span class="att-dot dot-TA"></span>Tutor absent</span>
+        <span><span class="att-dot dot-A"></span>Absent</span>
+        <span><span class="att-dot dot-UA"></span>Unexcused</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Top attenders</div>
+      <div id="dash-top"></div>
+    </div>
+  </div>
+
+  <!-- STUDENTS -->
+  <div id="page-students" class="page">
+    <input id="student-search" placeholder="Search students..." style="width:100%;padding:10px 13px;border:0.5px solid var(--border2);border-radius:var(--radius-sm);font-size:15px;background:var(--bg);color:var(--text);margin-bottom:12px" oninput="renderStudents()">
+    <div id="students-list"></div>
+    <button class="btn btn-primary" style="margin-top:4px" onclick="openAddStudent()">+ Add student</button>
+  </div>
+
+  <!-- PROFILE -->
+  <div id="page-profile" class="page">
+    <button onclick="showPage('students')" style="background:none;border:none;color:var(--blue);font-size:14px;cursor:pointer;padding:0;margin-bottom:14px">← Back</button>
+    <div id="profile-content"></div>
+  </div>
+
+  <!-- ATTENDANCE -->
+  <div id="page-attendance" class="page">
+    <div class="att-legend">
+      <span><span class="att-dot dot-P"></span>P = Present</span>
+      <span><span class="att-dot dot-TA"></span>TA = Tutor absent</span>
+      <span><span class="att-dot dot-A"></span>A = Absent</span>
+      <span><span class="att-dot dot-UA"></span>UA = Unexcused</span>
+    </div>
+    <div id="attendance-list"></div>
+  </div>
+
+  <!-- TRACKER -->
+  <div id="page-log" class="page">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+      <button class="btn btn-sm" onclick="changeMonth(-1)" style="width:auto;padding:7px 14px">‹</button>
+      <span id="month-label" style="font-size:15px;font-weight:600;flex:1;text-align:center"></span>
+      <button class="btn btn-sm" onclick="changeMonth(1)" style="width:auto;padding:7px 14px">›</button>
+    </div>
+    <div id="tracker-subject-bar" style="margin-bottom:12px"></div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
+      <input type="date" id="add-date-input" style="flex:1;padding:9px 10px;border:0.5px solid var(--border2);border-radius:var(--radius-sm);font-size:14px;background:var(--bg);color:var(--text)">
+      <button class="btn btn-primary btn-sm" onclick="addDateColumn()" style="width:auto">+ Add date</button>
+    </div>
+    <div class="att-legend" style="margin-bottom:8px;justify-content:center">
+      <span><span class="att-dot dot-P"></span>P</span>
+      <span><span class="att-dot dot-A"></span>A</span>
+      <span><span class="att-dot dot-TA"></span>TA</span>
+      <span><span class="att-dot dot-UA"></span>UA</span>
+    </div>
+    <div id="tracker-wrap" class="tracker-wrap"></div>
+    <div id="tracker-status" style="font-size:12px;color:var(--text2);margin-top:10px;text-align:center;min-height:18px"></div>
+  </div>
+
+  <!-- ALERTS -->
+  <div id="page-alerts" class="page">
+    <div class="section-label" style="margin-top:0">Tutor-absence impact</div>
+    <div id="alerts-ta"></div>
+    <div class="section-label">Low attendance — below 70%</div>
+    <div id="alerts-low"></div>
+  </div>
+
+  <!-- ADMIN -->
+  <div id="page-admin" class="page"><div id="admin-content"></div></div>
+
+  <nav class="bottomnav" id="bottomnav"></nav>
+</div>
+
+<!-- MODAL: SESSION TIMEOUT WARNING -->
+<div class="modal-bg" id="modal-timeout">
+  <div class="modal" style="text-align:center">
+    <div style="font-size:36px;margin-bottom:10px">⏱</div>
+    <h3>Session expiring soon</h3>
+    <p style="color:var(--text2);font-size:14px;margin-bottom:18px">You'll be signed out in <strong id="timeout-countdown"></strong> seconds due to inactivity.</p>
+    <button class="btn btn-primary" onclick="resetSessionTimer()">Stay signed in</button>
+  </div>
+</div>
+
+<!-- MODAL: COLUMN ACTIONS -->
+<div class="modal-bg" id="modal-col-actions">
+  <div class="modal">
+    <h3 id="col-actions-title">Column actions</h3>
+    <p style="color:var(--text2);font-size:13px;margin-bottom:14px">Apply to all students in this column. Cells with a value already set will be overwritten.</p>
+    <div style="display:grid;gap:8px">
+      <button class="btn" style="justify-content:flex-start;gap:10px" onclick="bulkSetColumn('P')"><span class="att-dot dot-P"></span>Mark all Present</button>
+      <button class="btn" style="justify-content:flex-start;gap:10px" onclick="bulkSetColumn('A')"><span class="att-dot dot-A"></span>Mark all Absent</button>
+      <button class="btn" style="justify-content:flex-start;gap:10px" onclick="bulkSetColumn('TA')"><span class="att-dot dot-TA"></span>Mark all Tutor Absent</button>
+      <button class="btn" style="justify-content:flex-start;gap:10px" onclick="bulkSetColumn('UA')"><span class="att-dot dot-UA"></span>Mark all Unexcused</button>
+      <button class="btn" style="justify-content:flex-start;gap:10px;color:var(--red-text)" onclick="bulkSetColumn('')">Clear entire column</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('modal-col-actions')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: ADD STUDENT -->
+<div class="modal-bg" id="modal-add-student">
+  <div class="modal">
+    <h3>Add student</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="field"><label>First name</label><input type="text" id="s-fname"></div>
+      <div class="field"><label>Last name (optional)</label><input type="text" id="s-lname"></div>
+    </div>
+    <div class="field"><label>Grade (optional)</label><input type="text" id="s-grade" placeholder="e.g. Grade 4"></div>
+    <div class="field"><label>Notes (optional)</label><textarea id="s-notes" rows="2"></textarea></div>
+    <div class="section-label" style="margin-top:0">Subjects (one or more)</div>
+    <div id="subject-rows"></div>
+    <button class="btn btn-sm" onclick="addSubjectRow()" style="width:100%;margin-top:6px">+ Add another subject</button>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('modal-add-student')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveNewStudent()">Add student</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: ADD ENROLLMENT (existing student) -->
+<div class="modal-bg" id="modal-add-enrollment">
+  <div class="modal">
+    <h3 id="modal-add-enr-title">Add subject</h3>
+    <div class="field"><label>Subject</label>
+      <select id="ne-subject">
+        <option>Math</option><option>Reading</option><option>Writing</option><option>Science</option><option>ESL</option><option>Other</option>
+      </select>
+    </div>
+    <div class="field" id="ne-tutor-field"><label>Tutor</label>
+      <select id="ne-tutor"></select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+      <div class="field"><label>Fall</label><input type="number" id="ne-fall" min="0" max="100"></div>
+      <div class="field"><label>Midyear</label><input type="number" id="ne-mid" min="0" max="100"></div>
+      <div class="field"><label>Summer</label><input type="number" id="ne-summer" min="0" max="100"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('modal-add-enrollment')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveNewEnrollment()">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: EDIT SCORES -->
+<div class="modal-bg" id="modal-scores">
+  <div class="modal">
+    <h3 id="modal-scores-title">Update scores</h3>
+    <div class="field"><label>Fall</label><input type="number" id="e-fall" min="0" max="100"></div>
+    <div class="field"><label>Midyear</label><input type="number" id="e-mid" min="0" max="100"></div>
+    <div class="field"><label>Summer</label><input type="number" id="e-summer" min="0" max="100"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('modal-scores')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveScores()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: EDIT NOTES -->
+<div class="modal-bg" id="modal-notes">
+  <div class="modal">
+    <h3 id="modal-notes-title">Notes</h3>
+    <div class="field"><textarea id="e-notes" rows="5"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('modal-notes')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveNotes()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: ADD TUTOR -->
+<div class="modal-bg" id="modal-add-tutor">
+  <div class="modal">
+    <h3>Add tutor account</h3>
+    <div class="field"><label>Full name</label><input type="text" id="nt-name"></div>
+    <div class="field"><label>Username</label><input type="text" id="nt-user"></div>
+    <div class="field"><label>Password</label><input type="password" id="nt-pw"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('modal-add-tutor')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTutor()">Add tutor</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+let currentUser=null, students=[], enrollments=[], sessions=[], users=[];
+let attChartInst=null, editingScoresEnrId=null, editingNotesStudentId=null, editingStudentId=null;
+const AVBG=['#e6f1fb','#e1f5ee','#faeeda','#eeedfe','#faece7'];
+const AVFG=['#185fa5','#0f6e56','#854f0b','#534ab7','#993c1d'];
+const SUBJECTS=['Math','Reading','Writing','Science','ESL','Other'];
+const MONTH_NAMES=['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+// ── SESSION TIMEOUT ──────────────────────────────────────────────────────────
+const SESSION_MINUTES = 20;          // total idle time before logout
+const WARN_SECONDS    = 120;         // warn this many seconds before logout
+let sessionTimer = null;
+let countdownTimer = null;
+let sessionExpiry = null;            // Date object
+
+function startSessionTimer() {
+  sessionExpiry = new Date(Date.now() + SESSION_MINUTES * 60 * 1000);
+  clearInterval(sessionTimer);
+  sessionTimer = setInterval(tickSession, 1000);
+  updateSessionBar(100);
+}
+
+function resetSessionTimer() {
+  closeModal('modal-timeout');
+  clearInterval(countdownTimer);
+  startSessionTimer();
+}
+
+function tickSession() {
+  const remaining = Math.max(0, Math.round((sessionExpiry - Date.now()) / 1000));
+  const total = SESSION_MINUTES * 60;
+  const pct = Math.round((remaining / total) * 100);
+
+  // Update bar colour
+  const bar = document.getElementById('session-bar-fill');
+  if (bar) {
+    bar.style.width = pct + '%';
+    bar.style.background = remaining < WARN_SECONDS
+      ? (remaining < 30 ? 'var(--red)' : 'var(--amber)')
+      : 'var(--green)';
+  }
+
+  // Show label in last 5 min
+  const label = document.getElementById('session-timer-label');
+  if (label) {
+    if (remaining <= 300) {
+      const m = Math.floor(remaining / 60), s = remaining % 60;
+      label.textContent = `Session: ${m}:${String(s).padStart(2,'0')}`;
+    } else {
+      label.textContent = '';
+    }
+  }
+
+  // Show warning modal at WARN_SECONDS remaining
+  if (remaining <= WARN_SECONDS && remaining > 0) {
+    const modal = document.getElementById('modal-timeout');
+    if (!modal.classList.contains('open')) {
+      modal.classList.add('open');
+      startCountdown(remaining);
+    }
+  }
+
+  if (remaining <= 0) {
+    clearInterval(sessionTimer);
+    logout(true);
+  }
+}
+
+function startCountdown(seconds) {
+  clearInterval(countdownTimer);
+  let s = seconds;
+  document.getElementById('timeout-countdown').textContent = s;
+  countdownTimer = setInterval(() => {
+    s--;
+    const el = document.getElementById('timeout-countdown');
+    if (el) el.textContent = Math.max(0, s);
+    if (s <= 0) clearInterval(countdownTimer);
+  }, 1000);
+}
+
+function updateSessionBar(pct) {
+  const bar = document.getElementById('session-bar-fill');
+  if (bar) { bar.style.width = pct + '%'; bar.style.background = 'var(--green)'; }
+}
+
+// Any user activity resets the timer
+['mousemove','keydown','touchstart','click','scroll'].forEach(evt =>
+  document.addEventListener(evt, () => { if (currentUser) resetSessionTimer(); }, {passive:true})
+);
+
+// ── LOGIN RATE LIMITING ──────────────────────────────────────────────────────
+let loginAttempts = 0;
+let loginLockedUntil = 0;
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_SECONDS = 30;
+
+// ── API (with audit trail on writes) ────────────────────────────────────────
+async function api(action, body={}) {
+  const res = await fetch(API_URL,{method:'POST',body:JSON.stringify({action,...body})});
+  return res.json();
+}
+
+// Wraps a write call with audit metadata so Apps Script can log it
+function auditedBody(body) {
+  if (!currentUser) return body;
+  return {
+    ...body,
+    _audit: {
+      userId: currentUser.id,
+      userName: currentUser.name,
+      timestamp: new Date().toISOString()
+    }
+  };
+}
+
+// ── AUTH ─────────────────────────────────────────────────────────────────────
+async function doLogin() {
+  const now = Date.now();
+  // Rate limit check
+  if (now < loginLockedUntil) {
+    const remaining = Math.ceil((loginLockedUntil - now) / 1000);
+    const err = document.getElementById('login-err');
+    err.textContent = `Too many failed attempts. Try again in ${remaining}s.`;
+    err.classList.remove('hidden');
+    return;
+  }
+
+  const username=document.getElementById('login-user').value.trim();
+  const password=document.getElementById('login-pw').value;
+  const err=document.getElementById('login-err'); const btn=document.getElementById('login-btn');
+  err.classList.add('hidden'); btn.textContent='Signing in...'; btn.disabled=true;
+  try {
+    const data=await api('login',{username,password});
+    if (data.error) {
+      loginAttempts++;
+      let msg = data.error;
+      if (loginAttempts >= MAX_ATTEMPTS) {
+        loginLockedUntil = Date.now() + LOCKOUT_SECONDS * 1000;
+        loginAttempts = 0;
+        msg = `Too many failed attempts. Try again in ${LOCKOUT_SECONDS}s.`;
+      } else {
+        const left = MAX_ATTEMPTS - loginAttempts;
+        msg += ` (${left} attempt${left!==1?'s':''} remaining)`;
+      }
+      err.textContent=msg; err.classList.remove('hidden'); return;
+    }
+    loginAttempts = 0;
+    currentUser=data.user;
+    await loadAppData();
+    document.getElementById('login-wrap').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+    setupUI(); showPage('dash');
+    startSessionTimer();
+    // Set print header
+    document.getElementById('print-header').textContent =
+      `TutorTrack — CONFIDENTIAL — Printed by ${currentUser.name} on ${new Date().toLocaleDateString()}`;
+  } catch(e) { err.textContent='Could not connect.'; err.classList.remove('hidden'); }
+  finally { btn.textContent='Sign in'; btn.disabled=false; }
+}
+
+function logout(timedOut=false) {
+  clearInterval(sessionTimer);
+  clearInterval(countdownTimer);
+  currentUser=null; students=[]; enrollments=[]; sessions=[]; users=[];
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('login-wrap').classList.remove('hidden');
+  document.getElementById('login-pw').value='';
+  document.getElementById('session-timer-label').textContent='';
+  updateSessionBar(0);
+  if (timedOut) {
+    const err = document.getElementById('login-err');
+    err.textContent = 'You were signed out due to inactivity.';
+    err.classList.remove('hidden');
+  }
+  closeModal('modal-timeout');
+}
+
+// ── DATA ─────────────────────────────────────────────────────────────────────
+async function loadAppData() {
+  const [sData,eData,uData] = await Promise.all([
+    api('getStudents',{tutorId:currentUser.id,role:currentUser.role}),
+    api('getEnrollments',{tutorId:currentUser.id,role:currentUser.role}),
+    currentUser.role==='admin' ? api('getUsers') : Promise.resolve({users:[]})
+  ]);
+  students=sData.students||[]; enrollments=eData.enrollments||[]; users=uData.users||[];
+  const enrIds=enrollments.map(e=>e.id);
+  if (enrIds.length) {
+    const sesData=await api('getSessions',{enrollmentIds:enrIds});
+    sessions=sesData.sessions||[];
+  } else { sessions=[]; }
+}
+
+async function refreshAll() {
+  const btn=document.getElementById('refresh-btn'); const old=btn.textContent;
+  btn.textContent='...'; btn.disabled=true;
+  try {
+    await loadAppData();
+    const active=document.querySelector('.page.active')?.id?.replace('page-','');
+    if (active) showPage(active);
+  } catch(e) { alert('Could not refresh.'); }
+  finally { btn.textContent=old; btn.disabled=false; }
+}
+
+// ── UI ───────────────────────────────────────────────────────────────────────
+function setupUI() {
+  const isAdmin=currentUser.role==='admin';
+  document.getElementById('topnav-title').textContent=isAdmin?'Admin — TutorTrack':currentUser.name;
+  const av=document.getElementById('topnav-av');
+  av.textContent=currentUser.name.split(' ').map(w=>w[0]).join('').slice(0,2);
+  av.style.background=isAdmin?'#eeedfe':'#e6f1fb';
+  av.style.color=isAdmin?'#534ab7':'#185fa5';
+
+  const nav=isAdmin
+    ? [{id:'dash',i:'◉',l:'Dashboard'},{id:'students',i:'◎',l:'Students'},{id:'log',i:'⊞',l:'Tracker'},{id:'alerts',i:'▲',l:'Alerts'},{id:'admin',i:'❖',l:'Tutors'}]
+    : [{id:'dash',i:'◉',l:'Dashboard'},{id:'students',i:'◎',l:'Students'},{id:'attendance',i:'✓',l:'Attendance'},{id:'log',i:'⊞',l:'Tracker'},{id:'alerts',i:'▲',l:'Alerts'}];
+  document.getElementById('bottomnav').innerHTML=nav.map(n=>`<button class="bnav-item" id="bnav-${n.id}" onclick="showPage('${n.id}')"><span class="bnav-icon">${n.i}</span>${n.l}</button>`).join('');
+}
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+name)?.classList.add('active');
+  document.getElementById('bnav-'+name)?.classList.add('active');
+  if (name==='dash') renderDash();
+  if (name==='students') renderStudents();
+  if (name==='attendance') renderAttendance();
+  if (name==='log') renderTracker();
+  if (name==='alerts') renderAlerts();
+  if (name==='admin') renderAdmin();
+}
+
+// ── HELPERS ──────────────────────────────────────────────────────────────────
+function enrollmentSessions(eId) { return sessions.filter(x=>String(x.enrollmentId)===String(eId)); }
+function attStats(eId) {
+  const ss=enrollmentSessions(eId);
+  const P=ss.filter(x=>x.code==='P').length, A=ss.filter(x=>x.code==='A').length;
+  const TA=ss.filter(x=>x.code==='TA').length, UA=ss.filter(x=>x.code==='UA').length;
+  return {P,A,TA,UA,total:ss.length,rate:ss.length?Math.round(P/ss.length*100):0};
+}
+function studentEnrollments(sId) {
+  let list=enrollments.filter(e=>String(e.studentId)===String(sId));
+  if (currentUser.role==='tutor') list=list.filter(e=>e.tutorId===currentUser.id);
+  return list;
+}
+function studentAggStats(sId) {
+  const enrs=studentEnrollments(sId);
+  let P=0,A=0,TA=0,UA=0,total=0;
+  enrs.forEach(e=>{const st=attStats(e.id);P+=st.P;A+=st.A;TA+=st.TA;UA+=st.UA;total+=st.total});
+  return {P,A,TA,UA,total,rate:total?Math.round(P/total*100):0};
+}
+function tutorName(tid) {
+  const u=users.find(x=>x.id==tid);
+  if (u) return u.name;
+  if (currentUser.role==='tutor' && currentUser.id==tid) return currentUser.name;
+  return 'Unknown';
+}
+function avStyle(s) {
+  const i=Math.abs((String(s.id||s.first||'').charCodeAt(0)||0))%5;
+  return `background:${AVBG[i]};color:${AVFG[i]}`;
+}
+function initials(s) { return (s.first&&s.first[0]||'?')+(s.last&&s.last[0]||''); }
+function fullName(s) { return s.last?`${s.first} ${s.last}`:s.first; }
+function nameWithLastInitial(s) { return s.last?`${s.first} ${s.last[0]}.`:s.first; }
+function dotHtml(c) { return `<span class="att-dot dot-${c}" title="${c}"></span>`; }
+function rateColor(r) { return r>=75?'var(--green-text)':r>=60?'var(--amber-text)':'var(--red-text)'; }
+function studentSubjects(sId) {
+  return studentEnrollments(sId).map(e=>e.subject).filter((v,i,a)=>a.indexOf(v)===i);
+}
+
+// ── DASHBOARD ────────────────────────────────────────────────────────────────
+function renderDash() {
+  const total=sessions.length;
+  const P=sessions.filter(x=>x.code==='P').length, TA=sessions.filter(x=>x.code==='TA').length;
+  const A=sessions.filter(x=>x.code==='A').length, UA=sessions.filter(x=>x.code==='UA').length;
+  const rate=total?Math.round(P/total*100):0;
+  document.getElementById('dash-metrics').innerHTML=`
+    <div class="metric"><div class="metric-label">Students</div><div class="metric-value">${students.length}</div></div>
+    <div class="metric"><div class="metric-label">Sessions</div><div class="metric-value">${total}</div></div>
+    <div class="metric"><div class="metric-label">Avg Attendance</div><div class="metric-value">${rate}%</div></div>
+    <div class="metric"><div class="metric-label">Tutor Absences</div><div class="metric-value" style="color:var(--red)">${TA}</div></div>`;
+  if (attChartInst) attChartInst.destroy();
+  attChartInst=new Chart(document.getElementById('attChart').getContext('2d'),{type:'doughnut',data:{labels:['Present','Tutor absent','Absent','Unexcused'],datasets:[{data:[P,TA,A,UA],backgroundColor:['#639922','#ef9f27','#e24b4a','#d4537e'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+  const sorted=[...students].sort((a,b)=>studentAggStats(b.id).rate-studentAggStats(a.id).rate);
+  document.getElementById('dash-top').innerHTML=sorted.slice(0,5).map(s=>{
+    const st=studentAggStats(s.id);
+    const subjects=studentSubjects(s.id);
+    return `<div class="list-row" onclick="showProfile('${s.id}')" style="cursor:pointer">
+      <div class="avatar" style="${avStyle(s)}">${initials(s)}</div>
+      <div class="list-row-info"><div class="list-row-name">${fullName(s)}</div>
+      <div class="list-row-sub">${subjects.map(sub=>`<span class="tag-subject">${sub}</span>`).join('')}</div></div>
+      <div class="list-row-right"><div style="font-weight:600;color:${rateColor(st.rate)}">${st.rate}%</div></div>
+    </div>`;
+  }).join('') || '<p style="color:var(--text2);font-size:14px;padding:8px 0">No students yet.</p>';
+}
+
+// ── STUDENTS ─────────────────────────────────────────────────────────────────
+function renderStudents() {
+  const q=(document.getElementById('student-search')?.value||'').toLowerCase();
+  const filtered=students.filter(s=>fullName(s).toLowerCase().includes(q));
+  document.getElementById('students-list').innerHTML=filtered.map(s=>{
+    const st=studentAggStats(s.id);
+    const subjects=studentSubjects(s.id);
+    return `<div class="card" onclick="showProfile('${s.id}')" style="cursor:pointer;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="avatar" style="${avStyle(s)};width:40px;height:40px;font-size:14px">${initials(s)}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:500;font-size:15px">${fullName(s)}</div>
+          <div style="font-size:13px;color:var(--text2);margin-top:2px">${s.grade?s.grade+' · ':''}${subjects.map(sub=>`<span class="tag-subject">${sub}</span>`).join('')}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-weight:600;color:${rateColor(st.rate)}">${st.rate}%</div>
+          <div style="font-size:12px;color:var(--text3)">${st.total} sessions</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('') || '<p style="color:var(--text2);font-size:14px;padding:24px;text-align:center">No students yet.</p>';
+}
+
+function showProfile(id) {
+  const s=students.find(x=>String(x.id)===String(id));
+  if (!s) return;
+  editingStudentId=id;
+  const st=studentAggStats(id);
+  const enrs=studentEnrollments(id);
+
+  document.getElementById('profile-content').innerHTML=`
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px">
+      <div class="avatar" style="${avStyle(s)};width:52px;height:52px;font-size:18px;font-weight:600">${initials(s)}</div>
+      <div><div style="font-size:20px;font-weight:600">${fullName(s)}</div>
+      <div style="font-size:14px;color:var(--text2);margin-top:2px">${s.grade||'No grade set'}</div></div>
+    </div>
+    <div class="section-label" style="margin-top:0">Overall attendance</div>
+    <div class="info-grid" style="grid-template-columns:repeat(4,1fr)">
+      <div class="info-item"><div class="info-lbl">Present</div><div class="info-val" style="color:var(--green-text)">${st.P}</div></div>
+      <div class="info-item"><div class="info-lbl">Absent</div><div class="info-val" style="color:var(--red-text)">${st.A}</div></div>
+      <div class="info-item"><div class="info-lbl">Tutor abs.</div><div class="info-val" style="color:var(--amber-text)">${st.TA}</div></div>
+      <div class="info-item"><div class="info-lbl">Unexcused</div><div class="info-val" style="color:#993556">${st.UA}</div></div>
+    </div>
+    <div class="section-label">Subjects (${enrs.length})</div>
+    ${enrs.map(e=>{
+      const est=attStats(e.id);
+      const trend=e.summer?(e.summer-e.fall):e.mid?(e.mid-e.fall):null;
+      return `<div class="card" style="margin-bottom:8px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div><span class="tag-subject">${e.subject}</span> <span style="font-size:13px;color:var(--text2)">${tutorName(e.tutorId)}</span></div>
+          <div style="font-weight:600;color:${rateColor(est.rate)};font-size:14px">${est.rate}%</div>
+        </div>
+        <div style="display:flex;gap:14px;font-size:12px;color:var(--text2);margin-bottom:8px">
+          <span style="color:var(--green-text)">P: ${est.P}</span>
+          <span style="color:var(--red-text)">A: ${est.A}</span>
+          <span style="color:var(--amber-text)">TA: ${est.TA}</span>
+          <span style="color:#993556">UA: ${est.UA}</span>
+        </div>
+        <div class="info-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:8px">
+          <div class="info-item" style="padding:6px 8px"><div class="info-lbl">Fall</div><div class="info-val">${e.fall||'—'}</div></div>
+          <div class="info-item" style="padding:6px 8px"><div class="info-lbl">Mid</div><div class="info-val">${e.mid||'—'}</div></div>
+          <div class="info-item" style="padding:6px 8px"><div class="info-lbl">Summer</div><div class="info-val">${e.summer||'—'}</div></div>
+          <div class="info-item" style="padding:6px 8px"><div class="info-lbl">Growth</div><div class="info-val ${trend>0?'trend-up':trend<0?'trend-dn':''}">${trend!=null?(trend>0?'+':'')+trend:'—'}</div></div>
+        </div>
+        <button class="btn btn-sm" onclick="openScores('${e.id}')" style="width:auto">Update scores</button>
+      </div>`;
+    }).join('') || '<p style="color:var(--text2);font-size:14px;padding:8px 0">No subjects enrolled.</p>'}
+    <button class="btn" onclick="openAddEnrollment('${s.id}')" style="margin-top:8px">+ Add subject</button>
+
+    <div class="section-label">Notes</div>
+    <div class="card" style="font-size:14px;color:var(--text2);line-height:1.6">${s.notes||'No notes.'}</div>
+    <div style="margin-top:8px"><button class="btn btn-sm" onclick="openNotes('${s.id}')" style="width:auto">Edit notes</button></div>`;
+  showPage('profile');
+}
+
+// ── ADD STUDENT ───────────────────────────────────────────────────────────────
+let subjectRowCount=0;
+function openAddStudent() {
+  subjectRowCount=0;
+  document.getElementById('subject-rows').innerHTML='';
+  ['s-fname','s-lname','s-grade','s-notes'].forEach(id=>document.getElementById(id).value='');
+  addSubjectRow();
+  showModal('modal-add-student');
+}
+function addSubjectRow() {
+  subjectRowCount++;
+  const idx=subjectRowCount;
+  const tutorOpts=currentUser.role==='admin'
+    ? users.filter(u=>u.role==='tutor').map(u=>`<option value="${u.id}">${u.name}</option>`).join('')
+    : `<option value="${currentUser.id}" selected>${currentUser.name}</option>`;
+  const html=`<div class="enrollment-row" id="srow-${idx}">
+    <div class="er-info" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <select id="sr-subject-${idx}" style="padding:8px;border:0.5px solid var(--border2);border-radius:var(--radius-sm);font-size:14px;background:var(--bg);color:var(--text)">
+        ${SUBJECTS.map(s=>`<option>${s}</option>`).join('')}
+      </select>
+      <select id="sr-tutor-${idx}" style="padding:8px;border:0.5px solid var(--border2);border-radius:var(--radius-sm);font-size:14px;background:var(--bg);color:var(--text)" ${currentUser.role!=='admin'?'disabled':''}>
+        ${tutorOpts}
+      </select>
+    </div>
+    ${subjectRowCount>1?`<button class="btn btn-sm" onclick="document.getElementById('srow-${idx}').remove()" style="width:auto;padding:4px 8px">×</button>`:''}
+  </div>`;
+  document.getElementById('subject-rows').insertAdjacentHTML('beforeend',html);
+}
+
+async function saveNewStudent() {
+  const fn=document.getElementById('s-fname').value.trim();
+  if (!fn) { alert('Please enter a first name.'); return; }
+  const ln=document.getElementById('s-lname').value.trim();
+  const grade=document.getElementById('s-grade').value.trim();
+  const notes=document.getElementById('s-notes').value;
+  const rows=document.querySelectorAll('#subject-rows .enrollment-row');
+  if (!rows.length) { alert('Please add at least one subject.'); return; }
+  const enrInputs=[];
+  rows.forEach(row=>{
+    const idx=row.id.split('-')[1];
+    const subject=document.getElementById(`sr-subject-${idx}`).value;
+    const tutorId=document.getElementById(`sr-tutor-${idx}`).value;
+    enrInputs.push({subject,tutorId});
+  });
+  // Audit trail included
+  const sres=await api('addStudent', auditedBody({student:{first:fn,last:ln,grade,notes}}));
+  const studentId=sres.id;
+  const newEnrs=[];
+  for (const ei of enrInputs) {
+    const eres=await api('addEnrollment', auditedBody({enrollment:{studentId,...ei}}));
+    newEnrs.push({id:eres.id,studentId,...ei,fall:'',mid:'',summer:'',active:true});
+  }
+  students.push({id:studentId,first:fn,last:ln,grade,notes});
+  enrollments.push(...newEnrs);
+  closeModal('modal-add-student');
+  renderStudents();
+}
+
+// ── ADD ENROLLMENT ────────────────────────────────────────────────────────────
+let addingEnrFor=null;
+function openAddEnrollment(studentId) {
+  addingEnrFor=studentId;
+  const s=students.find(x=>String(x.id)===String(studentId));
+  document.getElementById('modal-add-enr-title').textContent=`Add subject — ${fullName(s)}`;
+  const tutorSel=document.getElementById('ne-tutor');
+  if (currentUser.role==='admin') {
+    tutorSel.innerHTML=users.filter(u=>u.role==='tutor').map(u=>`<option value="${u.id}">${u.name}</option>`).join('');
+    document.getElementById('ne-tutor-field').classList.remove('hidden');
+  } else {
+    tutorSel.innerHTML=`<option value="${currentUser.id}">${currentUser.name}</option>`;
+    document.getElementById('ne-tutor-field').classList.add('hidden');
+  }
+  ['ne-fall','ne-mid','ne-summer'].forEach(id=>document.getElementById(id).value='');
+  showModal('modal-add-enrollment');
+}
+async function saveNewEnrollment() {
+  const subject=document.getElementById('ne-subject').value;
+  const tutorId=document.getElementById('ne-tutor').value;
+  const f=parseInt(document.getElementById('ne-fall').value);
+  const m=parseInt(document.getElementById('ne-mid').value);
+  const su=parseInt(document.getElementById('ne-summer').value);
+  const enr={studentId:addingEnrFor,tutorId,subject,fall:isNaN(f)?'':f,mid:isNaN(m)?'':m,summer:isNaN(su)?'':su};
+  const res=await api('addEnrollment', auditedBody({enrollment:enr}));
+  enrollments.push({id:res.id,...enr,active:true});
+  closeModal('modal-add-enrollment');
+  showProfile(addingEnrFor);
+}
+
+// ── EDIT SCORES ───────────────────────────────────────────────────────────────
+function openScores(enrId) {
+  const e=enrollments.find(x=>String(x.id)===String(enrId));
+  editingScoresEnrId=enrId;
+  const s=students.find(x=>String(x.id)===String(e.studentId));
+  document.getElementById('modal-scores-title').textContent=`${e.subject} scores — ${fullName(s)}`;
+  document.getElementById('e-fall').value=e.fall||'';
+  document.getElementById('e-mid').value=e.mid||'';
+  document.getElementById('e-summer').value=e.summer||'';
+  showModal('modal-scores');
+}
+async function saveScores() {
+  const e=enrollments.find(x=>String(x.id)===String(editingScoresEnrId));
+  const f=parseInt(document.getElementById('e-fall').value);
+  const m=parseInt(document.getElementById('e-mid').value);
+  const su=parseInt(document.getElementById('e-summer').value);
+  e.fall=isNaN(f)?'':f; e.mid=isNaN(m)?'':m; e.summer=isNaN(su)?'':su;
+  await api('updateEnrollment', auditedBody({enrollment:e}));
+  closeModal('modal-scores');
+  showProfile(e.studentId);
+}
+
+// ── EDIT NOTES ────────────────────────────────────────────────────────────────
+function openNotes(sId) {
+  editingNotesStudentId=sId;
+  const s=students.find(x=>String(x.id)===String(sId));
+  document.getElementById('modal-notes-title').textContent=`Notes — ${fullName(s)}`;
+  document.getElementById('e-notes').value=s.notes||'';
+  showModal('modal-notes');
+}
+async function saveNotes() {
+  const s=students.find(x=>String(x.id)===String(editingNotesStudentId));
+  s.notes=document.getElementById('e-notes').value;
+  await api('updateStudent', auditedBody({student:s}));
+  closeModal('modal-notes');
+  showProfile(editingNotesStudentId);
+}
+
+// ── ATTENDANCE ────────────────────────────────────────────────────────────────
+function renderAttendance() {
+  document.getElementById('attendance-list').innerHTML=students.map(s=>{
+    const enrs=studentEnrollments(s.id);
+    return enrs.map(e=>{
+      const st=attStats(e.id);
+      const dots=enrollmentSessions(e.id).slice(-8).map(x=>dotHtml(x.code)).join('');
+      return `<div class="card" style="margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <div class="avatar" style="${avStyle(s)}">${initials(s)}</div>
+          <div><div style="font-weight:500">${fullName(s)}</div>
+          <div style="font-size:13px;color:var(--text2)"><span class="tag-subject">${e.subject}</span>${currentUser.role==='admin'?' '+tutorName(e.tutorId):''}</div></div>
+          <div style="margin-left:auto;font-weight:600;color:${rateColor(st.rate)}">${st.rate}%</div>
+        </div>
+        <div class="att-dots">${dots||'<span style="font-size:13px;color:var(--text3)">No sessions yet</span>'}</div>
+        <div style="display:flex;gap:14px;margin-top:10px;font-size:12px">
+          <span style="color:var(--green-text)">P: ${st.P}</span>
+          <span style="color:var(--red-text)">A: ${st.A}</span>
+          <span style="color:var(--amber-text)">TA: ${st.TA}</span>
+          <span style="color:#993556">UA: ${st.UA}</span>
+        </div>
+      </div>`;
+    }).join('');
+  }).join('') || '<p style="color:var(--text2);font-size:14px;padding:24px;text-align:center">No enrollments yet.</p>';
+}
+
+// ── TRACKER ───────────────────────────────────────────────────────────────────
+let trackerYear, trackerMonth, addedDates=[], currentSubject=null;
+
+function uniqueSubjects() {
+  const list=enrollments.filter(e=>currentUser.role==='admin'||e.tutorId===currentUser.id);
+  return [...new Set(list.map(e=>e.subject))];
+}
+
+function renderTracker() {
+  if (trackerYear===undefined) {
+    const t=new Date(); trackerYear=t.getFullYear(); trackerMonth=t.getMonth();
+  }
+  document.getElementById('month-label').textContent=`${MONTH_NAMES[trackerMonth]} ${trackerYear}`;
+
+  const subjs=uniqueSubjects();
+  if (!currentSubject || !subjs.includes(currentSubject)) currentSubject=subjs[0]||null;
+
+  const subBar=document.getElementById('tracker-subject-bar');
+  if (subjs.length>1) {
+    subBar.innerHTML=`<div class="tutor-tabs">${subjs.map(s=>`<button class="tutor-tab ${s===currentSubject?'active':''}" onclick="setTrackerSubject('${s}')">${s}</button>`).join('')}</div>`;
+  } else { subBar.innerHTML=''; }
+
+  const mm=String(trackerMonth+1).padStart(2,'0');
+  const lastDay=new Date(trackerYear,trackerMonth+1,0).getDate();
+  const input=document.getElementById('add-date-input');
+  input.min=`${trackerYear}-${mm}-01`; input.max=`${trackerYear}-${mm}-${String(lastDay).padStart(2,'0')}`;
+  if (!input.value || input.value<input.min || input.value>input.max) input.value=`${trackerYear}-${mm}-01`;
+
+  let myEnrs=enrollments.filter(e=>e.subject===currentSubject);
+  if (currentUser.role==='tutor') myEnrs=myEnrs.filter(e=>e.tutorId===currentUser.id);
+
+  const wrap=document.getElementById('tracker-wrap');
+  if (!myEnrs.length) {
+    wrap.innerHTML='<p style="padding:24px;text-align:center;color:var(--text2);font-size:14px">No students enrolled in this subject.</p>';
+    return;
+  }
+
+  const monthPrefix=`${trackerYear}-${mm}`;
+  const enrIds=new Set(myEnrs.map(e=>String(e.id)));
+  const fromSessions=sessions.filter(x=>enrIds.has(String(x.enrollmentId))&&String(x.date).startsWith(monthPrefix)).map(x=>String(x.date));
+  const fromAdded=addedDates.filter(d=>d.startsWith(monthPrefix));
+  const allDates=[...new Set([...fromSessions,...fromAdded])].sort();
+
+  if (!allDates.length) {
+    wrap.innerHTML='<p style="padding:24px;text-align:center;color:var(--text2);font-size:14px">No dates yet for this month. Use "+ Add date" to start.</p>';
+    return;
+  }
+
+  wrap.innerHTML=`<table class="tracker-table">
+    <thead><tr><th>Student</th>${allDates.map(d=>`<th><span class="day">${parseInt(d.split('-')[2])}</span><button class="col-action" onclick="openColumnActions('${d}',event)" title="Column options">⋯</button></th>`).join('')}</tr></thead>
+    <tbody>${myEnrs.map(e=>{
+      const s=students.find(st=>String(st.id)===String(e.studentId));
+      if (!s) return '';
+      return `<tr>
+        <td><div style="display:flex;align-items:center;gap:8px"><div class="avatar" style="${avStyle(s)};width:24px;height:24px;font-size:10px">${initials(s)}</div><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${nameWithLastInitial(s)}</span></div></td>
+        ${allDates.map(d=>{
+          const existing=sessions.find(x=>String(x.enrollmentId)===String(e.id)&&String(x.date)===d);
+          const code=existing?existing.code:'';
+          return `<td style="padding:2px"><select class="tracker-cell-select tc-${code}" onchange="updateCell('${e.id}','${d}',this.value,this)">
+            <option value="" ${!code?'selected':''}>—</option>
+            <option value="P" ${code==='P'?'selected':''}>P</option>
+            <option value="A" ${code==='A'?'selected':''}>A</option>
+            <option value="TA" ${code==='TA'?'selected':''}>TA</option>
+            <option value="UA" ${code==='UA'?'selected':''}>UA</option>
+          </select></td>`;
+        }).join('')}
+      </tr>`;
+    }).join('')}</tbody></table>`;
+}
+
+function setTrackerSubject(sub) { currentSubject=sub; renderTracker(); }
+function changeMonth(d) {
+  trackerMonth+=d;
+  if (trackerMonth<0){trackerMonth=11;trackerYear--;}
+  if (trackerMonth>11){trackerMonth=0;trackerYear++;}
+  renderTracker();
+}
+function addDateColumn() {
+  const date=document.getElementById('add-date-input').value;
+  if (!date) { alert('Please pick a date.'); return; }
+  const [y,m]=date.split('-').map(Number);
+  trackerYear=y; trackerMonth=m-1;
+  if (!addedDates.includes(date)) addedDates.push(date);
+  renderTracker();
+}
+async function updateCell(enrollmentId, date, code, sel) {
+  sel.className='tracker-cell-select tc-'+code;
+  const status=document.getElementById('tracker-status'); status.textContent='Saving...';
+  try {
+    await api('upsertSession', auditedBody({enrollmentId,date,code}));
+    const idx=sessions.findIndex(x=>String(x.enrollmentId)===String(enrollmentId)&&String(x.date)===date);
+    if (!code) { if (idx>=0) sessions.splice(idx,1); }
+    else if (idx>=0) sessions[idx].code=code;
+    else sessions.push({id:Date.now(),enrollmentId,date,code});
+    status.textContent='Saved ✓';
+    setTimeout(()=>{if (status.textContent==='Saved ✓') status.textContent='';},1500);
+  } catch(e) { status.textContent='Error saving.'; }
+}
+
+// ── BULK COLUMN ACTIONS ───────────────────────────────────────────────────────
+let pendingColumnDate=null;
+function openColumnActions(date, evt) {
+  evt?.stopPropagation();
+  pendingColumnDate=date;
+  const [y,m,d]=date.split('-');
+  document.getElementById('col-actions-title').textContent=`${MONTH_NAMES[parseInt(m)-1]} ${parseInt(d)} — column actions`;
+  showModal('modal-col-actions');
+}
+
+async function bulkSetColumn(code) {
+  closeModal('modal-col-actions');
+  const date=pendingColumnDate;
+  if (!date) return;
+
+  let myEnrs=enrollments.filter(e=>e.subject===currentSubject);
+  if (currentUser.role==='tutor') myEnrs=myEnrs.filter(e=>e.tutorId===currentUser.id);
+  if (!myEnrs.length) return;
+
+  const status=document.getElementById('tracker-status');
+  status.textContent=`Applying to ${myEnrs.length} students...`;
+
+  myEnrs.forEach(e=>{
+    const idx=sessions.findIndex(x=>String(x.enrollmentId)===String(e.id)&&String(x.date)===date);
+    if (!code) {
+      if (idx>=0) sessions.splice(idx,1);
+    } else if (idx>=0) {
+      sessions[idx].code=code;
+    } else {
+      sessions.push({id:Date.now()+Math.random(),enrollmentId:e.id,date,code});
+    }
+  });
+  renderTracker();
+
+  try {
+    let done=0;
+    for (const e of myEnrs) {
+      await api('upsertSession', auditedBody({enrollmentId:e.id,date,code}));
+      done++;
+      status.textContent=`Saving ${done} of ${myEnrs.length}...`;
+    }
+    status.textContent=`Saved ${myEnrs.length} students ✓`;
+    setTimeout(()=>{if (status.textContent.startsWith('Saved')) status.textContent='';},2000);
+  } catch(err) {
+    status.textContent='Some saves failed — refresh to confirm.';
+  }
+}
+
+// ── ALERTS ────────────────────────────────────────────────────────────────────
+function renderAlerts() {
+  const taList=[];
+  enrollments.forEach(e=>{
+    const st=attStats(e.id);
+    if (st.TA>0) taList.push({e,st});
+  });
+  taList.sort((a,b)=>b.st.TA-a.st.TA);
+  document.getElementById('alerts-ta').innerHTML=taList.map(({e,st})=>{
+    const s=students.find(x=>String(x.id)===String(e.studentId));
+    if (!s) return '';
+    return `<div class="alert"><div class="alert-name">${fullName(s)} — ${e.subject}</div>
+      <div class="alert-sub">${st.TA} session${st.TA>1?'s':''} missed due to tutor absence${currentUser.role==='admin'?' · '+tutorName(e.tutorId):''}</div></div>`;
+  }).join('') || '<p style="color:var(--text2);font-size:14px">No tutor-absence issues.</p>';
+
+  const lowList=[];
+  enrollments.forEach(e=>{
+    const st=attStats(e.id);
+    if (st.rate<70 && st.total>0) lowList.push({e,st});
+  });
+  lowList.sort((a,b)=>a.st.rate-b.st.rate);
+  document.getElementById('alerts-low').innerHTML=lowList.map(({e,st})=>{
+    const s=students.find(x=>String(x.id)===String(e.studentId));
+    if (!s) return '';
+    return `<div class="alert red"><div class="alert-name">${fullName(s)} — ${e.subject} — ${st.rate}%</div>
+      <div class="alert-sub">${st.A} absent, ${st.UA} unexcused${currentUser.role==='admin'?' · '+tutorName(e.tutorId):''}</div></div>`;
+  }).join('') || '<p style="color:var(--text2);font-size:14px">All enrollments above 70%.</p>';
+}
+
+// ── ADMIN ─────────────────────────────────────────────────────────────────────
+function renderAdmin() {
+  const tutors=users.filter(u=>u.role==='tutor');
+  document.getElementById('admin-content').innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <span style="font-size:16px;font-weight:600">Tutor Overview</span>
+      <button class="btn btn-primary btn-sm" onclick="showModal('modal-add-tutor')">+ Add tutor</button>
+    </div>` +
+    tutors.map(t=>{
+      const tEnrs=enrollments.filter(e=>String(e.tutorId)===String(t.id));
+      const total=tEnrs.reduce((a,e)=>a+enrollmentSessions(e.id).length,0);
+      const allP=tEnrs.reduce((a,e)=>a+attStats(e.id).P,0);
+      const allTA=tEnrs.reduce((a,e)=>a+attStats(e.id).TA,0);
+      const rate=total?Math.round(allP/total*100):0;
+      const uniqStudents=new Set(tEnrs.map(e=>String(e.studentId))).size;
+      return `<div class="tutor-block">
+        <div class="tutor-block-header">
+          <div class="avatar" style="background:var(--blue-bg);color:var(--blue-text);width:36px;height:36px;font-size:13px">${t.name.split(' ').map(w=>w[0]).join('').slice(0,2)}</div>
+          <div style="flex:1"><div style="font-weight:600">${t.name}</div>
+          <div style="font-size:13px;color:var(--text2)">@${t.username} · ${uniqStudents} student${uniqStudents!==1?'s':''} · ${tEnrs.length} enrollment${tEnrs.length!==1?'s':''}</div></div>
+          <div style="text-align:right;font-size:13px">
+            <div style="font-weight:600;color:${rateColor(rate)}">${rate}%</div>
+            <div style="color:var(--text2)">TA: ${allTA}</div>
+          </div>
+        </div>
+        ${tEnrs.map(e=>{
+          const s=students.find(st=>String(st.id)===String(e.studentId));
+          if (!s) return '';
+          const est=attStats(e.id);
+          return `<div class="list-row" onclick="showProfile('${s.id}')" style="cursor:pointer">
+            <div class="list-row-info"><div class="list-row-name">${fullName(s)}</div>
+            <div class="list-row-sub"><span class="tag-subject">${e.subject}</span></div></div>
+            <div class="list-row-right"><div style="font-weight:600;color:${rateColor(est.rate)}">${est.rate}%</div>
+            <div style="font-size:12px;color:var(--text3)">${est.total} sessions</div></div>
+          </div>`;
+        }).join('')}
+        <div style="margin-top:10px;display:flex;justify-content:flex-end">
+          <button class="btn btn-sm" onclick="resetPassword('${t.id}','${t.name.replace(/'/g,'')}')">Reset password</button>
+        </div>
+      </div>`;
+    }).join('');
+}
+
+async function saveTutor() {
+  const name=document.getElementById('nt-name').value.trim();
+  const username=document.getElementById('nt-user').value.trim();
+  const pw=document.getElementById('nt-pw').value;
+  if (!name||!username||pw.length<4) { alert('Please fill all fields (password min 4 chars).'); return; }
+  const res=await api('addUser', auditedBody({user:{id:username,name,username,password:pw}}));
+  if (res.error) { alert(res.error); return; }
+  users.push({id:username,name,username,role:'tutor'});
+  closeModal('modal-add-tutor');
+  ['nt-name','nt-user','nt-pw'].forEach(id=>document.getElementById(id).value='');
+  renderAdmin();
+}
+async function resetPassword(userId, userName) {
+  const newPw=prompt(`New password for ${userName} (min 4 chars):`);
+  if (newPw===null) return;
+  if (newPw.length<4) { alert('Min 4 characters.'); return; }
+  const res=await api('updatePassword', auditedBody({userId,newPassword:newPw}));
+  if (res.error) { alert(res.error); return; }
+  alert(`Password updated for ${userName}.`);
+}
+
+function showModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-bg').forEach(m=>m.addEventListener('click',e=>{if (e.target===m && m.id!=='modal-timeout') m.classList.remove('open');}));
+document.getElementById('login-pw').addEventListener('keydown',e=>{if (e.key==='Enter') doLogin();});
+</script>
+</body>
+</html>
